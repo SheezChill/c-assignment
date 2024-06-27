@@ -4,19 +4,14 @@
 #include "../../lib/fort.h"
 #include <stdio.h>
 
-ft_table_t *table;
+void GuestMenu(cJSON *rooms_json, char *rooms_json_data);
+void ViewRooms(cJSON *rooms_json);
 
-cJSON *item;
-
-char *rooms_json_data;
-cJSON *rooms_json;
-
-void GuestMenu();
-
-void ViewRooms() {
-  table = ft_create_table();
-
+void ViewRooms(cJSON *rooms_json) {
+  ft_table_t *table = ft_create_table();
   TableHeader(table, "Room ID", "Price", "Type");
+
+  cJSON *item;
 
   cJSON_ArrayForEach(item, rooms_json) {
     if (cJSON_GetObjectItemCaseSensitive(item, "booked")->valueint == 0) {
@@ -29,13 +24,13 @@ void ViewRooms() {
     }
   }
 
-  printf("%s\n", ft_to_string(table));
+  printf("\n%s", ft_to_string(table));
   ft_destroy_table(table);
 
-  GuestMenu();
+  GuestMenu(rooms_json, NULL);
 }
 
-void GuestMenu() {
+void GuestMenu(cJSON *rooms_json, char *rooms_json_data) {
   printf("\n--- Guest Menu ---");
   printf("\n1. View available rooms");
   printf("\n2. Back");
@@ -44,11 +39,12 @@ void GuestMenu() {
 
   switch (choice) {
   case 1:
-    ViewRooms();
+    ViewRooms(rooms_json);
     break;
   case 2:
     cJSON_Delete(rooms_json);
-    free(rooms_json_data);
+    if (rooms_json_data)
+      free(rooms_json_data);
 
     LoginMenu();
     break;
@@ -58,8 +54,8 @@ void GuestMenu() {
 void InitGuest() {
   ft_set_default_border_style(FT_SOLID_ROUND_STYLE);
 
-  rooms_json_data = ReadJSON("database/rooms.json");
-  rooms_json = cJSON_Parse(rooms_json_data);
+  char *rooms_json_data = ReadJSON("database/rooms.json");
+  cJSON *rooms_json = cJSON_Parse(rooms_json_data);
 
-  GuestMenu();
+  GuestMenu(rooms_json, rooms_json_data);
 }

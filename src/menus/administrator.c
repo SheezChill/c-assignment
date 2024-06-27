@@ -1,5 +1,6 @@
 #include "../../include/login.h"
 #include "../../include/utils.h"
+#include "../../lib/asprintf.h"
 #include "../../lib/cJSON.h"
 #include "../../lib/fort.h"
 #include "../../lib/nanoid.h"
@@ -14,38 +15,31 @@ typedef struct {
   int price;
 } RoomType;
 
-// #region global variable definitions
-cJSON *selected_user;
+typedef struct {
+  char *field_name;
+  int max_value_length;
+} Field;
 
-char *customers_json_data;
-cJSON *customers_json;
+typedef struct {
+  cJSON *customers_json;
+  cJSON *staffs_json;
+  cJSON *rooms_json;
+  cJSON *selected_user;
+  cJSON *item;
+  ft_table_t *table;
+} AdminContext;
 
-char *staffs_json_data;
-cJSON *staffs_json;
+int AdministratorMenu(AdminContext *ctx);
 
-char *rooms_json_data;
-cJSON *rooms_json;
+void CreateUser(AdminContext *ctx, const UserType user_type);
 
-cJSON *item;
+void ManageStaffs(AdminContext *ctx);
 
-ft_table_t *table;
-// #endregion
+void ManageCustomers(AdminContext *ctx);
 
-// #region function definitions
-int AdministratorMenu();
+void ManageRooms(AdminContext *ctx);
 
-void CreateUser(const UserType);
-
-void ManageStaffs();
-void ManageStaffs_Ask(const int);
-
-void ManageCustomers();
-void ManageCustomers_Ask(const int);
-
-void ManageRooms();
-// #endregion
-
-int AdministratorMenu() {
+int AdministratorMenu(AdminContext *ctx) {
   printf("\n--- Administrator Menu ---");
   printf("\n1. Register new staff");
   printf("\n2. Register new customer");
@@ -58,29 +52,28 @@ int AdministratorMenu() {
 
   switch (choice) {
   case 1:
-    CreateUser(STAFF);
+    CreateUser(ctx, STAFF);
     break;
   case 2:
-    CreateUser(CUSTOMER);
+    CreateUser(ctx, CUSTOMER);
     break;
   case 3:
-    ManageStaffs();
+    ManageStaffs(ctx);
     break;
   case 4:
-    ManageCustomers();
+    ManageCustomers(ctx);
     break;
   case 5:
-    ManageRooms();
+    ManageRooms(ctx);
     break;
   case 6:
-    LoginMenu();
     return 0;
   }
 
   return 0;
 }
 
-void CreateUser(const UserType user_type) {
+void CreateUser(AdminContext *ctx, const UserType user_type) {
   char *user_name = StringInput("User name", 64);
   char *user_password = StringInput("User password", 64);
 
@@ -120,8 +113,8 @@ void CreateUser(const UserType user_type) {
     free(phone);
     free(join_date);
 
-    cJSON_AddItemToArray(staffs_json, new_user);
-    WriteJSON("database/staffs.json", staffs_json);
+    cJSON_AddItemToArray(ctx->staffs_json, new_user);
+    WriteJSON("database/staffs.json", ctx->staffs_json);
     break;
   }
   case CUSTOMER: {
@@ -133,76 +126,121 @@ void CreateUser(const UserType user_type) {
 
     free(email);
 
-    cJSON_AddItemToArray(customers_json, new_user);
-    WriteJSON("database/customers.json", customers_json);
+    cJSON_AddItemToArray(ctx->customers_json, new_user);
+    WriteJSON("database/customers.json", ctx->customers_json);
     break;
   }
   }
 
-  AdministratorMenu();
+  AdministratorMenu(ctx);
 }
 
-void ManageRooms() {
-  table = ft_create_table();
+void ChangeUserField(AdminContext *ctx, Field field, UserType user_type) {
+  char *buffer;
+  asprintf(&buffer, "New %s", field.field_name);
 
-  TableHeader(table, "Index", "Room ID", "Type", "Price", "Booked", "Booked by");
+  char *new_value = StringInput(buffer, 64);
 
-  int rooms_array_size = cJSON_GetArraySize(rooms_json);
+  cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(ctx->selected_user, field.field_name), new_value);
 
-  char *room_ids[rooms_array_size];
+  free(new_value);
+  free(buffer);
 
-  int i = 0;
-  cJSON_ArrayForEach(item, rooms_json) {
-    cJSON *booked_by = cJSON_GetObjectItemCaseSensitive(item, "booked_by");
-    char *capitalized_type = Capitalize(cJSON_GetObjectItemCaseSensitive(item, "type")->valuestring);
-    room_ids[i] = item->string;
-    i++;
+  switch (user_type) {
+  case STAFF:
+    WriteJSON("database/staffs.json", ctx->staffs_json);
+    break;
+  case CUSTOMER:
+    WriteJSON("database/customers.json", ctx->customers_json);
+    break;
+  }
+}
 
-    ft_printf_ln(table,
-                 "%d|%s|%s|%d|%s|%s",
-                 i,
-                 item->string,
-                 capitalized_type,
-                 cJSON_GetObjectItemCaseSensitive(item, "price")->valueint,
-                 cJSON_GetObjectItemCaseSensitive(item, "booked")->valueint ? "Yes" : "No",
-                 cJSON_IsNull(booked_by) ? "No one" : booked_by->valuestring);
+void ManageRooms_Edit(AdminContext *ctx, char *room_ids[]) {
+  int rooms_array_size = cJSON_GetArraySize(ctx->rooms_json);
 
-    free(capitalized_type);
+  int selected_room_id_index = Choice("Enter which room you want to edit", 1, rooms_array_size) - 1;
+  cJSON *selected_room = FindValue(ctx->rooms_json, room_ids[selected_room_id_index]);
+
+  if (cJSON_GetObjectItemCaseSensitive(selected_room, "booked")->valueint == 1) {
+    printf("\nYou can't edit this room! It's being booked!\n");
+
+    ManageRooms(ctx);
+    return;
   }
 
-  printf("\n%s\n", ft_to_string(table));
-  ft_destroy_table(table);
+  printf("\n1. Edit room ID");
+  printf("\n2. Edit type");
+  printf("\n3. Back");
 
-  printf("\n1. Add room");
-  printf("\n2. Edit room");
-  printf("\n3. Delete room");
-  printf("\n4. Back");
-
-  int choice = Choice("Enter choice", 1, 4);
+  int choice = Choice("Enter choice", 1, 3);
 
   switch (choice) {
   case 1: {
-    char *roomID;
-    int exists;
+    char *new_room_id;
 
+    char *old_room_id = (char *)malloc(strlen(selected_room->string) + 1);
+    strcpy(old_room_id, selected_room->string);
+
+    int exists = 0;
     do {
-      roomID = StringInput("Room ID (0 to go back)", 7);
       exists = 0;
 
-      if (strcmp(roomID, "0") == 0) {
-        ManageRooms();
+      new_room_id = StringInput("Room ID (0 to go back)", 7);
+
+      if (strcmp(new_room_id, "0") == 0) {
+        ManageRooms_Edit(ctx, room_ids);
         return;
       }
 
-      cJSON_ArrayForEach(item, rooms_json) {
-        if (strcmp(item->string, roomID) == 0) {
+      cJSON_ArrayForEach(ctx->item, ctx->rooms_json) {
+        if (strcmp(ctx->item->string, new_room_id) == 0) {
           printf("This room already exists!\n");
+
           exists = 1;
           break;
         }
       }
     } while (exists == 1);
 
+    cJSON *room_object = cJSON_DetachItemFromObject(ctx->rooms_json, room_ids[selected_room_id_index]);
+
+    cJSON_AddItemToObject(ctx->rooms_json, new_room_id, room_object);
+    cJSON *history_array = cJSON_GetObjectItemCaseSensitive(room_object, "history");
+
+    // Change all instances of the *old* room id to the *new* room id in customers.json
+    if (cJSON_GetArraySize(history_array) > 0) {
+      char *customer_ids[cJSON_GetArraySize(history_array)];
+
+      int i = 0;
+      cJSON_ArrayForEach(ctx->item, history_array) {
+        customer_ids[i] = cJSON_GetObjectItemCaseSensitive(ctx->item, "booked_by")->valuestring;
+        i++;
+      }
+
+      for (i = 0; i < cJSON_GetArraySize(history_array); i++) {
+        cJSON *customer_data = FindKey(ctx->customers_json, "id", customer_ids[i]);
+
+        cJSON *bookings = cJSON_GetObjectItemCaseSensitive(customer_data, "bookings");
+        cJSON_ArrayForEach(ctx->item, bookings) {
+          cJSON *booking_room_id = cJSON_GetObjectItemCaseSensitive(ctx->item, "room_id");
+
+          if (strcmp(booking_room_id->valuestring, old_room_id) == 0) {
+            cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(ctx->item, "room_id"), new_room_id);
+          }
+        }
+      }
+
+      WriteJSON("database/customers.json", ctx->customers_json);
+    }
+
+    cJSON_DeleteItemFromObject(ctx->rooms_json, room_ids[selected_room_id_index]);
+
+    free(new_room_id);
+    free(old_room_id);
+    break;
+  }
+  case 2: {
     RoomType room_types[4] = {
         {"suite", 250},
         {"deluxe", 200},
@@ -221,156 +259,156 @@ void ManageRooms() {
 
     RoomType selected_room_type = room_types[Choice("Enter choice: ", 1, 4) - 1];
 
-    cJSON *new_room = cJSON_CreateObject();
-    cJSON_AddBoolToObject(new_room, "booked", 0);
-    cJSON_AddNullToObject(new_room, "booked_by");
-    cJSON_AddNumberToObject(new_room, "price", selected_room_type.price);
-    cJSON_AddStringToObject(new_room, "type", selected_room_type.type);
-    cJSON_AddArrayToObject(new_room, "history");
-
-    cJSON_AddItemToObject(rooms_json, roomID, new_room);
-    free(roomID);
+    cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(selected_room, "type"), selected_room_type.type);
+    cJSON_SetNumberValue(cJSON_GetObjectItemCaseSensitive(selected_room, "price"), selected_room_type.price);
     break;
   }
-  case 2: {
-    int selected_room_id_index = Choice("Enter which room you want to edit", 1, rooms_array_size) - 1;
+  case 3:
+    ManageRooms(ctx);
+    return;
+  }
+}
 
-    cJSON *selected_room = FindValue(rooms_json, room_ids[selected_room_id_index]);
-    char *old_room_id = (char *)malloc(strlen(selected_room->string) + 1);
+void ManageRooms_Add(AdminContext *ctx) {
+  char *roomID;
+  int exists;
 
-    strcpy(old_room_id, selected_room->string);
+  do {
+    roomID = StringInput("Room ID (0 to go back)", 7);
+    exists = 0;
 
-    if (cJSON_GetObjectItemCaseSensitive(selected_room, "booked")->valueint == 1) {
-      printf("\nYou can't edit this room! It's being booked!\n");
-      ManageRooms();
+    if (strcmp(roomID, "0") == 0) {
+      ManageRooms(ctx);
       return;
     }
 
-    printf("\n1. Edit room ID");
-    printf("\n2. Edit type");
-
-    int choice = Choice("Enter choice", 1, 2);
-
-    switch (choice) {
-    case 1: {
-      char *new_room_id;
-      int exists;
-      do {
-        new_room_id = StringInput("Room ID (0 to go back)", 7);
-        exists = 0;
-
-        if (strcmp(new_room_id, "0") == 0) {
-          ManageRooms();
-          return;
-        }
-
-        cJSON_ArrayForEach(item, rooms_json) {
-          if (strcmp(item->string, new_room_id) == 0) {
-            printf("This room already exists!\n");
-            exists = 1;
-            break;
-          }
-        }
-      } while (exists == 1);
-
-      cJSON *old_children = cJSON_DetachItemFromObject(rooms_json, room_ids[selected_room_id_index]);
-
-      cJSON_AddItemToObject(rooms_json, new_room_id, old_children);
-      cJSON *history_array = cJSON_GetObjectItemCaseSensitive(old_children, "history");
-
-      if (cJSON_GetArraySize(history_array) > 0) {
-        char *customer_ids[cJSON_GetArraySize(history_array)];
-        int i = 0;
-        cJSON_ArrayForEach(item, history_array) {
-          customer_ids[i] = cJSON_GetObjectItemCaseSensitive(item, "booked_by")->valuestring;
-          i++;
-        }
-
-        for (i = 0; i < cJSON_GetArraySize(history_array); i++) {
-          cJSON *customer_data = FindKey(customers_json, "id", customer_ids[i]);
-
-          cJSON *yes = cJSON_GetObjectItemCaseSensitive(customer_data, "bookings");
-          cJSON *booking_containing_room_id = FindKey(yes, "room_id", selected_room->string);
-
-          cJSON_ArrayForEach(item, yes) {
-            cJSON *room_id_item = cJSON_GetObjectItemCaseSensitive(item, "room_id");
-            if (room_id_item == NULL) {
-              fprintf(stderr, "Error: room_id not found in item\n");
-              continue;
-            }
-
-            if (strcmp(room_id_item->valuestring, old_room_id) == 0) {
-              cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(item, "room_id"), new_room_id);
-            }
-          }
-        }
-
-        free(old_room_id);
-
-        WriteJSON("database/customers.json", customers_json);
+    cJSON_ArrayForEach(ctx->item, ctx->rooms_json) {
+      if (strcmp(ctx->item->string, roomID) == 0) {
+        printf("This room already exists!\n");
+        exists = 1;
+        break;
       }
-
-      cJSON_DeleteItemFromObject(rooms_json, room_ids[selected_room_id_index]);
-
-      free(new_room_id);
-      break;
     }
-    case 2: {
-      RoomType room_types[4] = {
-          {"suite", 250},
-          {"deluxe", 200},
-          {"double", 150},
-          {"single", 100},
-      };
+  } while (exists == 1);
 
-      printf("\nWhat is the room type? ");
-      for (int i = 0; i < 4; i++) {
-        char *capitalized_room_type = Capitalize(room_types[i].type);
+  RoomType room_types[4] = {
+      {"suite", 250},
+      {"deluxe", 200},
+      {"double", 150},
+      {"single", 100},
+  };
 
-        printf("\n%d. %s", i + 1, capitalized_room_type);
+  printf("\nWhat is the room type? ");
+  for (int i = 0; i < 4; i++) {
+    char *capitalized_room_type = Capitalize(room_types[i].type);
 
-        free(capitalized_room_type);
-      }
+    printf("\n%d. %s", i + 1, capitalized_room_type);
 
-      RoomType selected_room_type = room_types[Choice("Enter choice: ", 1, 4) - 1];
+    free(capitalized_room_type);
+  }
 
-      cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(selected_room, "type"), selected_room_type.type);
-      cJSON_SetNumberValue(
-          cJSON_GetObjectItemCaseSensitive(selected_room, "price"), selected_room_type.price);
-      break;
-    }
-    }
+  RoomType selected_room_type = room_types[Choice("Enter choice: ", 1, 4) - 1];
+
+  cJSON *new_room = cJSON_CreateObject();
+  cJSON_AddBoolToObject(new_room, "booked", 0);
+  cJSON_AddNullToObject(new_room, "booked_by");
+  cJSON_AddNumberToObject(new_room, "price", selected_room_type.price);
+  cJSON_AddStringToObject(new_room, "type", selected_room_type.type);
+  cJSON_AddArrayToObject(new_room, "history");
+
+  cJSON_AddItemToObject(ctx->rooms_json, roomID, new_room);
+
+  free(roomID);
+}
+
+void ManageRooms(AdminContext *ctx) {
+  ft_table_t *table = ctx->table;
+  table = ft_create_table();
+
+  TableHeader(table, "Index", "Room ID", "Type", "Price", "Booked", "Booked by");
+
+  int rooms_array_size = cJSON_GetArraySize(ctx->rooms_json);
+  char *room_ids[rooms_array_size];
+
+  int i = 0;
+  cJSON_ArrayForEach(ctx->item, ctx->rooms_json) {
+    cJSON *booked_by = cJSON_GetObjectItemCaseSensitive(ctx->item, "booked_by");
+    char *capitalized_type = Capitalize(cJSON_GetObjectItemCaseSensitive(ctx->item, "type")->valuestring);
+
+    room_ids[i] = ctx->item->string;
+    i++;
+
+    ft_printf_ln(table,
+                 "%d|%s|%s|%d|%s|%s",
+                 i,
+                 ctx->item->string,
+                 capitalized_type,
+                 cJSON_GetObjectItemCaseSensitive(ctx->item, "price")->valueint,
+                 cJSON_GetObjectItemCaseSensitive(ctx->item, "booked")->valueint ? "Yes" : "No",
+                 cJSON_IsNull(booked_by) ? "No one" : booked_by->valuestring);
+
+    free(capitalized_type);
+  }
+
+  printf("\n%s\n", ft_to_string(table));
+  ft_destroy_table(table);
+
+  printf("\n1. Add room");
+  printf("\n2. Edit room");
+  printf("\n3. Delete room");
+  printf("\n4. Back");
+
+  int choice = Choice("Enter choice", 1, 4);
+
+  switch (choice) {
+  case 1: {
+    ManageRooms_Add(ctx);
+    break;
+  }
+  case 2: {
+    ManageRooms_Edit(ctx, room_ids);
     break;
   }
   case 3: {
-    printf("\nWhich room do you want to delete? ");
-    choice = Choice("Enter choice", 1, cJSON_GetArraySize(rooms_json)) - 1;
+    choice = Choice("Room to delete", 1, cJSON_GetArraySize(ctx->rooms_json)) - 1;
 
-    cJSON_DeleteItemFromObject(rooms_json, room_ids[choice]);
+    int confirmation = YesNo("Are you sure you want to delete this room?");
+
+    if (confirmation == 0) {
+      printf("\nRoom deletion cancelled.\n");
+      ManageRooms(ctx);
+      return;
+    }
+
+    cJSON_DeleteItemFromObject(ctx->rooms_json, room_ids[choice]);
+
+    printf("\nRoom deleted.\n");
     break;
   }
   case 4:
-    AdministratorMenu();
+    AdministratorMenu(ctx);
     return;
   }
 
-  WriteJSON("database/rooms.json", rooms_json);
-  ManageRooms();
+  WriteJSON("database/rooms.json", ctx->rooms_json);
+
+  ManageRooms(ctx);
 }
 
-void ManageStaffs_Ask(const int updated) {
+void ManageStaffs_Edit(AdminContext *ctx, const int updated) {
   if (updated) {
     printf("\nUpdated info: \n");
   }
 
+  ft_table_t *table = ctx->table;
   table = ft_create_table();
 
-  char *staff_id = cJSON_GetObjectItemCaseSensitive(selected_user, "id")->valuestring;
-  char *staff_name = cJSON_GetObjectItemCaseSensitive(selected_user, "name")->valuestring;
-  char *staff_password = cJSON_GetObjectItemCaseSensitive(selected_user, "password")->valuestring;
-  char *staff_email = cJSON_GetObjectItemCaseSensitive(selected_user, "email")->valuestring;
-  char *staff_phone = cJSON_GetObjectItemCaseSensitive(selected_user, "phone")->valuestring;
-  char *staff_join_date = cJSON_GetObjectItemCaseSensitive(selected_user, "joined")->valuestring;
+  char *staff_id = cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "id")->valuestring;
+  char *staff_name = cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "name")->valuestring;
+  char *staff_password = cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "password")->valuestring;
+  char *staff_email = cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "email")->valuestring;
+  char *staff_phone = cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "phone")->valuestring;
+  char *staff_join_date = cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "joined")->valuestring;
 
   TableHeader(table, "Id", "Name", "Password", "Email", "Phone", "Join date");
   ft_write_ln(table, staff_id, staff_name, staff_password, staff_email, staff_phone, staff_join_date);
@@ -378,10 +416,16 @@ void ManageStaffs_Ask(const int updated) {
   printf("%s\n", ft_to_string(table));
   ft_destroy_table(table);
 
-  printf("\n1. Change name");
-  printf("\n2. Change password");
-  printf("\n3. Change email");
-  printf("\n4. Change phone");
+  Field fields[] = {
+      {"name", 64},
+      {"password", 64},
+      {"email", 64},
+      {"phone", 10},
+  };
+
+  for (int i = 0; i < 4; i++) {
+    printf("\n%d. Change %s", i + 1, fields[i].field_name);
+  }
   printf("\n5. Change join date");
   printf("\n6. Delete staff");
   printf("\n7. Back");
@@ -389,50 +433,10 @@ void ManageStaffs_Ask(const int updated) {
   int choice = Choice("What to change?", 1, 7);
 
   switch (choice) {
-  case 1: {
-    char *new_name = StringInput("New name", 64);
-
-    cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(selected_user, "name"), new_name);
-
-    free(new_name);
-
-    WriteJSON("database/staffs.json", staffs_json);
-    break;
-  }
-  case 2: {
-    char *new_password = StringInput("New password", 10);
-
-    cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(selected_user, "password"), new_password);
-
-    free(new_password);
-
-    WriteJSON("database/staffs.json", staffs_json);
-    break;
-  }
-  case 3: {
-    char *new_email = StringInput("New email", 10);
-
-    cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(selected_user, "email"), new_email);
-
-    free(new_email);
-
-    WriteJSON("database/staffs.json", staffs_json);
-    break;
-  }
-  case 4: {
-    char *new_phone = StringInput("New phone", 10);
-
-    cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(selected_user, "phone"), new_phone);
-
-    free(new_phone);
-
-    WriteJSON("database/staffs.json", staffs_json);
-    break;
-  }
   case 5: {
     char *new_join_date;
-    int is_date_string_valid;
 
+    int is_date_string_valid = 0;
     do {
       new_join_date = StringInput("New join date (YYYY-MM-DD)", 10);
       is_date_string_valid = IsValidISODate(new_join_date) == 0;
@@ -443,13 +447,13 @@ void ManageStaffs_Ask(const int updated) {
       }
 
       break;
-    } while (is_date_string_valid);
+    } while (is_date_string_valid == 1);
 
-    cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(selected_user, "joined"), new_join_date);
+    cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "joined"), new_join_date);
 
     free(new_join_date);
 
-    WriteJSON("database/staffs.json", staffs_json);
+    WriteJSON("database/staffs.json", ctx->staffs_json);
     break;
   }
   case 6: {
@@ -457,43 +461,47 @@ void ManageStaffs_Ask(const int updated) {
 
     if (choice == 0) {
       printf("\nStaff deletion cancelled.\n");
-      ManageStaffs_Ask(0);
+      ManageStaffs_Edit(ctx, 0);
       return;
     }
 
-    cJSON *detached_item = cJSON_DetachItemViaPointer(staffs_json, selected_user);
+    cJSON *detached_item = cJSON_DetachItemViaPointer(ctx->staffs_json, ctx->selected_user);
     cJSON_Delete(detached_item);
 
-    WriteJSON("database/staffs.json", staffs_json);
+    WriteJSON("database/staffs.json", ctx->staffs_json);
+
     printf("\nStaff deleted.\n");
-    ManageStaffs();
+    ManageStaffs(ctx);
     return;
   }
   case 7:
-    ManageStaffs();
+    ManageStaffs(ctx);
     return;
+  default:
+    ChangeUserField(ctx, fields[choice - 1], STAFF);
+    break;
   }
 
-  ManageStaffs_Ask(1);
+  ManageStaffs_Edit(ctx, 1);
 }
 
-void ManageStaffs() {
-  // Show users in table format
+void ManageStaffs(AdminContext *ctx) {
+  ft_table_t *table = ctx->table;
   table = ft_create_table();
 
-  int array_size = cJSON_GetArraySize(staffs_json);
+  TableHeader(table, "No.", "Id", "Name", "Password", "Email", "Phone", "Join date");
+
+  int array_size = cJSON_GetArraySize(ctx->staffs_json);
   char *ids[array_size];
 
   int i = 0;
-  TableHeader(table, "No.", "Id", "Name", "Password", "Email", "Phone", "Join date");
-
-  cJSON_ArrayForEach(item, staffs_json) {
-    char *staff_id = cJSON_GetObjectItemCaseSensitive(item, "id")->valuestring;
-    char *staff_name = cJSON_GetObjectItemCaseSensitive(item, "name")->valuestring;
-    char *staff_password = cJSON_GetObjectItemCaseSensitive(item, "password")->valuestring;
-    char *staff_email = cJSON_GetObjectItemCaseSensitive(item, "email")->valuestring;
-    char *staff_phone = cJSON_GetObjectItemCaseSensitive(item, "phone")->valuestring;
-    char *staff_join_date = cJSON_GetObjectItemCaseSensitive(item, "joined")->valuestring;
+  cJSON_ArrayForEach(ctx->item, ctx->staffs_json) {
+    char *staff_id = cJSON_GetObjectItemCaseSensitive(ctx->item, "id")->valuestring;
+    char *staff_name = cJSON_GetObjectItemCaseSensitive(ctx->item, "name")->valuestring;
+    char *staff_password = cJSON_GetObjectItemCaseSensitive(ctx->item, "password")->valuestring;
+    char *staff_email = cJSON_GetObjectItemCaseSensitive(ctx->item, "email")->valuestring;
+    char *staff_phone = cJSON_GetObjectItemCaseSensitive(ctx->item, "phone")->valuestring;
+    char *staff_join_date = cJSON_GetObjectItemCaseSensitive(ctx->item, "joined")->valuestring;
 
     ids[i] = staff_id;
     i++;
@@ -513,123 +521,91 @@ void ManageStaffs() {
   printf("%s\n", ft_to_string(table));
   ft_destroy_table(table);
 
-  // Ask for which staff to manage
   int choice = Choice("Select which staff to manage (0 to go back to main menu)", 0, array_size) - 1;
   if (choice == -1) {
-    AdministratorMenu();
+    AdministratorMenu(ctx);
     return;
   }
 
-  selected_user = FindKey(staffs_json, "id", ids[choice]);
+  ctx->selected_user = FindKey(ctx->staffs_json, "id", ids[choice]);
 
-  ManageStaffs_Ask(0);
+  ManageStaffs_Edit(ctx, 0);
 }
 
-void ManageCustomers_Ask(const int updated) {
+void ManageCustomers_Edit(AdminContext *ctx, const int updated) {
   if (updated) {
     printf("\nUpdated info: \n");
   }
 
+  ft_table_t *table = ctx->table;
   table = ft_create_table();
 
-  char *customer_id = cJSON_GetObjectItemCaseSensitive(selected_user, "id")->valuestring;
-  char *customer_name = cJSON_GetObjectItemCaseSensitive(selected_user, "name")->valuestring;
-  char *customer_password = cJSON_GetObjectItemCaseSensitive(selected_user, "password")->valuestring;
-  char *customer_email = cJSON_GetObjectItemCaseSensitive(selected_user, "email")->valuestring;
+  char *customer_id = cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "id")->valuestring;
+  char *customer_name = cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "name")->valuestring;
+  char *customer_password = cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "password")->valuestring;
+  char *customer_email = cJSON_GetObjectItemCaseSensitive(ctx->selected_user, "email")->valuestring;
 
   TableHeader(table, "Id", "Name", "Password", "Email");
-  ft_write(table, customer_id, customer_name, customer_password, customer_email);
+  ft_write_ln(table, customer_id, customer_name, customer_password, customer_email);
 
   printf("%s\n", ft_to_string(table));
   ft_destroy_table(table);
 
-  printf("\n1. Change name");
-  printf("\n2. Change password");
-  printf("\n3. Change email");
+  Field fields[] = {{"name", 64}, {"password", 64}, {"email", 64}};
+
+  for (int i = 0; i < 3; i++) {
+    printf("\n%d. Change %s", i + 1, fields[i].field_name);
+  }
   printf("\n4. Delete customer");
   printf("\n5. Back");
 
   int choice = Choice("What to change?", 1, 5);
 
   switch (choice) {
-  case 1: {
-    char *new_name = StringInput("New name", 64);
-
-    cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(selected_user, "name"), new_name);
-
-    free(new_name);
-
-    WriteJSON("database/customers.json", customers_json);
-    break;
-  }
-  case 2: {
-    char *new_password = StringInput("New password", 10);
-
-    cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(selected_user, "password"), new_password);
-
-    free(new_password);
-
-    WriteJSON("database/customers.json", customers_json);
-    break;
-  }
-  case 3: {
-    char *new_email = StringInput("New email", 10);
-
-    cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(selected_user, "email"), new_email);
-
-    free(new_email);
-
-    WriteJSON("database/customers.json", customers_json);
-    break;
-  }
   case 4: {
     int choice = YesNo("Are you sure you want to delete this customer?");
 
     if (choice == 0) {
       printf("\nCustomer deletion cancelled.\n");
-      ManageCustomers_Ask(0);
+      ManageCustomers_Edit(ctx, 0);
       return;
     }
 
-    cJSON *detached_item = cJSON_DetachItemViaPointer(customers_json, selected_user);
+    cJSON *detached_item = cJSON_DetachItemViaPointer(ctx->customers_json, ctx->selected_user);
     cJSON_Delete(detached_item);
 
-    WriteJSON("database/customers.json", customers_json);
+    WriteJSON("database/customers.json", ctx->customers_json);
+
     printf("\nCustomer deleted.\n");
-    ManageCustomers();
+    ManageCustomers(ctx);
     return;
   }
   case 5:
-    cJSON_Delete(customers_json);
-    free(customers_json_data);
-
-    cJSON_Delete(staffs_json);
-    free(staffs_json_data);
-
-    cJSON_Delete(rooms_json);
-    free(rooms_json_data);
-
-    ManageCustomers();
+    ManageCustomers(ctx);
     return;
+  default:
+    ChangeUserField(ctx, fields[choice - 1], CUSTOMER);
+    break;
   }
 
-  ManageCustomers_Ask(1);
+  ManageCustomers_Edit(ctx, 1);
 }
 
-void ManageCustomers() {
+void ManageCustomers(AdminContext *ctx) {
+  ft_table_t *table = ctx->table;
   table = ft_create_table();
 
-  int array_size = cJSON_GetArraySize(customers_json);
+  TableHeader(table, "No.", "Id", "Name", "Password", "Email");
+
+  int array_size = cJSON_GetArraySize(ctx->customers_json);
   char *ids[array_size];
 
   int i = 0;
-  TableHeader(table, "No.", "Id", "Name", "Password", "Email");
-
-  cJSON_ArrayForEach(item, customers_json) {
-    char *customer_id = cJSON_GetObjectItemCaseSensitive(item, "id")->valuestring;
-    char *customer_name = cJSON_GetObjectItemCaseSensitive(item, "name")->valuestring;
-    char *customer_password = cJSON_GetObjectItemCaseSensitive(item, "password")->valuestring;
-    char *customer_email = cJSON_GetObjectItemCaseSensitive(item, "email")->valuestring;
+  cJSON_ArrayForEach(ctx->item, ctx->customers_json) {
+    char *customer_id = cJSON_GetObjectItemCaseSensitive(ctx->item, "id")->valuestring;
+    char *customer_name = cJSON_GetObjectItemCaseSensitive(ctx->item, "name")->valuestring;
+    char *customer_password = cJSON_GetObjectItemCaseSensitive(ctx->item, "password")->valuestring;
+    char *customer_email = cJSON_GetObjectItemCaseSensitive(ctx->item, "email")->valuestring;
 
     ids[i] = customer_id;
     i++;
@@ -641,31 +617,40 @@ void ManageCustomers() {
   printf("%s\n", ft_to_string(table));
   ft_destroy_table(table);
 
-  // Ask for which staff to manage
+  // Ask for which customer to manage
   int choice = Choice("Select which customer to manage (0 to go back to main menu)", 0, array_size) - 1;
   if (choice == -1) {
-    AdministratorMenu();
+    AdministratorMenu(ctx);
     return;
   }
 
-  selected_user = FindKey(customers_json, "id", ids[choice]);
+  ctx->selected_user = FindKey(ctx->customers_json, "id", ids[choice]);
 
-  ManageCustomers_Ask(0);
-
-  cJSON_Delete(selected_user);
+  ManageCustomers_Edit(ctx, 0);
 }
 
 void InitAdministrator() {
   ft_set_default_border_style(FT_SOLID_ROUND_STYLE);
 
-  customers_json_data = ReadJSON("database/customers.json");
-  customers_json = cJSON_Parse(customers_json_data);
+  AdminContext ctx;
 
-  staffs_json_data = ReadJSON("database/staffs.json");
-  staffs_json = cJSON_Parse(staffs_json_data);
+  char *customers_json_data = ReadJSON("database/customers.json");
+  ctx.customers_json = cJSON_Parse(customers_json_data);
+  free(customers_json_data);
 
-  rooms_json_data = ReadJSON("database/rooms.json");
-  rooms_json = cJSON_Parse(rooms_json_data);
+  char *staffs_json_data = ReadJSON("database/staffs.json");
+  ctx.staffs_json = cJSON_Parse(staffs_json_data);
+  free(staffs_json_data);
 
-  AdministratorMenu();
+  char *rooms_json_data = ReadJSON("database/rooms.json");
+  ctx.rooms_json = cJSON_Parse(rooms_json_data);
+  free(rooms_json_data);
+
+  AdministratorMenu(&ctx);
+
+  cJSON_Delete(ctx.customers_json);
+  cJSON_Delete(ctx.staffs_json);
+  cJSON_Delete(ctx.rooms_json);
+
+  LoginMenu();
 }
