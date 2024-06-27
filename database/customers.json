@@ -1,0 +1,31 @@
+[{
+		"id":	"X5-Fd",
+		"name":	"bob",
+		"password":	"123",
+		"email":	"bob@example.com",
+		"bookings":	[{
+				"room_id":	"A1-12",
+				"booking_start":	"2024-06-08T15:00",
+				"booking_end":	"2024-06-11T20:30",
+				"checked_in":	false,
+				"checked_out":	false
+			}, {
+				"room_id":	"A5-16",
+				"booking_start":	"2024-02-04T15:00",
+				"booking_end":	"2024-02-08T15:00",
+				"checked_in":	true,
+				"checked_out":	true
+			}]
+	}, {
+		"id":	"L5lib",
+		"name":	"tim",
+		"password":	"123",
+		"email":	"tim@example.com",
+		"bookings":	[{
+				"room_id":	"A1-12",
+				"booking_start":	"2024-05-20T15:00",
+				"booking_end":	"2024-05-24T10:00",
+				"checked_in":	true,
+				"checked_out":	true
+			}]
+	}]
