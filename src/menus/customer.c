@@ -178,7 +178,14 @@ void CancelReservation(CustomerContext *ctx) {
   printf("%s\n", ft_to_string(ctx->table));
   ft_destroy_table(ctx->table);
 
-  int selected_booking_index = booking_indices[Choice("Enter which booking to cancel", 1, j) - 1];
+  int choice = Choice("Enter which booking to cancel (0 to go back)", 0, j) - 1;
+  int selected_booking_index = booking_indices[choice];
+
+  if (choice == -1) {
+    CustomerMenu(ctx);
+    return;
+  }
+
   cJSON *selected_booking = cJSON_GetArrayItem(customer_bookings, selected_booking_index);
 
   cJSON *selected_booking_room =
@@ -259,6 +266,7 @@ void ViewBookingHistory(CustomerContext *ctx) {
 
       ft_printf_ln(ctx->table, "%d|%s|%d|%s", i, room_id, price, capitalized_type);
       free(capitalized_type);
+
       i++;
     }
   }

@@ -49,6 +49,26 @@ char *Login(Role role) {
   return NULL;
 }
 
+void LoginUser(Role role) {
+  char *id = Login(role);
+
+  if (id == NULL) {
+    printf("\nInvalid credentials!");
+  } else {
+    switch (role) {
+    case ADMIN:
+      InitAdministrator();
+      break;
+    case STAFF:
+      InitStaff();
+      break;
+    case CUSTOMER:
+      InitCustomer(id);
+      break;
+    }
+  }
+}
+
 void LoginMenu() {
   printf("\n1. Administrator");
   printf("\n2. Staff");
@@ -58,42 +78,17 @@ void LoginMenu() {
 
   int choice = Choice("Enter role", 1, 5);
 
+  Role roles[] = {ADMIN, STAFF, CUSTOMER};
+
   switch (choice) {
-  case 1: {
-    char *id = Login(ADMIN);
-
-    if (id == NULL) {
-      printf("\nInvalid credentials!");
-    } else {
-      InitAdministrator();
-    }
-    break;
-  }
-  case 2: {
-    char *id = Login(STAFF);
-
-    if (id == NULL) {
-      printf("\nInvalid credentials!");
-    } else {
-      InitStaff();
-    }
-    break;
-  }
-  case 3: {
-    char *id = Login(CUSTOMER);
-
-    if (id == NULL) {
-      printf("\nInvalid credentials!");
-    } else {
-      InitCustomer(id);
-    }
-    break;
-  }
   case 4: {
     InitGuest();
     break;
   }
   case 5:
+    break;
+  default:
+    LoginUser(roles[choice - 1]);
     break;
   }
 }

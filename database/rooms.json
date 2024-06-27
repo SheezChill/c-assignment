@@ -1,45 +1,50 @@
 {
-	"A1-12":	{
-		"booked":	true,
-		"booked_by":	"X5-Fd",
-		"price":	200,
-		"type":	"deluxe",
-		"history":	[{
-				"booked_by":	"L5lib",
-				"booking_start":	"2024-05-20T15:00",
-				"booking_end":	"2024-05-24T10:00"
-			}]
-	},
-	"A1-13":	{
-		"booked":	false,
-		"booked_by":	null,
-		"price":	250,
-		"type":	"suite",
-		"history":	[]
-	},
-	"A1-14":	{
-		"booked":	false,
-		"booked_by":	null,
-		"price":	150,
-		"type":	"double",
-		"history":	[]
-	},
-	"A5-10":	{
-		"booked":	false,
-		"booked_by":	null,
-		"price":	100,
-		"type":	"single",
-		"history":	[]
-	},
-	"A1-16":	{
-		"booked":	false,
-		"booked_by":	null,
-		"price":	250,
-		"type":	"suite",
-		"history":	[{
-				"booked_by":	"X5-Fd",
-				"booking_start":	"2024-02-04T15:00",
-				"booking_end":	"2024-02-08T15:00"
-			}]
-	}
+  "A1-12": {
+    "booked": true,
+    "booked_by": "X5-Fd",
+    "price": 200,
+    "type": "deluxe",
+    "history": [
+      {
+        "booked_by": "L5lib",
+        "booking_start": "2024-05-20T15:00",
+        "booking_end": "2024-05-24T10:00"
+      }
+    ]
+  },
+  "A1-13": {
+    "booked": false,
+    "booked_by": null,
+    "price": 250,
+    "type": "suite",
+    "history": []
+  },
+  "A1-14": {
+    "booked": false,
+    "booked_by": null,
+    "price": 150,
+    "type": "double",
+    "history": []
+  },
+  "A5-10": {
+    "booked": false,
+    "booked_by": null,
+    "price": 100,
+    "type": "single",
+    "history": []
+  },
+  "A1-16": {
+    "booked": false,
+    "booked_by": null,
+    "price": 250,
+    "type": "suite",
+    "history": [
+      {
+        "booked_by": "X5-Fd",
+        "booking_start": "2024-02-04T15:00",
+        "booking_end": "2024-02-08T15:00"
+      }
+    ]
+  }
 }
+
