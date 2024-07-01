@@ -1,5 +1,6 @@
 #include "../../include/login.h"
 #include "../../include/utils.h"
+#include "../../lib/asprintf.h"
 #include "../../lib/cJSON.h"
 #include "../../lib/fort.h"
 #include <stdio.h>
