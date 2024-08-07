@@ -1,4 +1,0 @@
-id,name,password,email,room_id,booking_start,booking_end,checked_in,checked_out
-X5-Fd,bob,123,bob@mail.bob,A1-12,2024-06-08T15:00,2024-06-11T20:30,false,false
-X5-Fd,bob,123,bob@mail.bob,A1-16,2024-02-04T15:00,2024-02-08T15:00,true,true
-L5lib,tim,123,tim@example.com,A1-12,2024-05-20T15:00,2024-05-24T10:00,true,true
