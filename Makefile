@@ -5,7 +5,7 @@ BUILD_DIR=./build
 BIN_DIR=./bin
 SRC_DIR=src
 LIB_DIR=./lib
-OBJECTS=$(BUILD_DIR)/cJSON.o $(BUILD_DIR)/utils.o $(BUILD_DIR)/fort.o $(BUILD_DIR)/asprintf.o $(BUILD_DIR)/login.o $(BUILD_DIR)/administrator.o $(BUILD_DIR)/staff.o $(BUILD_DIR)/customer.o $(BUILD_DIR)/guest.o
+OBJECTS=$(BUILD_DIR)/cJSON.o $(BUILD_DIR)/utils.o $(BUILD_DIR)/fort.o $(BUILD_DIR)/login.o $(BUILD_DIR)/administrator.o $(BUILD_DIR)/staff.o $(BUILD_DIR)/customer.o $(BUILD_DIR)/guest.o
 EXECUTABLES=$(BIN_DIR)/staff $(BIN_DIR)/admin $(BIN_DIR)/customer $(BIN_DIR)/guest $(BIN_DIR)/login
 
 .PHONY: all staff admin customer guest login post_build clean
@@ -43,9 +43,6 @@ $(BUILD_DIR)/fort.o: $(LIB_DIR)/fort.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/cJSON.o: $(LIB_DIR)/cJSON.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $< -o $@
-
-$(BUILD_DIR)/asprintf.o: $(LIB_DIR)/asprintf.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/utils.o: $(SRC_DIR)/utils.c | $(BUILD_DIR)

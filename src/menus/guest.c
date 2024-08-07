@@ -26,8 +26,6 @@ void ViewRooms(cJSON *rooms_json) {
 
       // Add room information to the table
       ft_printf_ln(table, "%s|%d|%s", item->string, price, capitalized_type);
-
-      free(capitalized_type);
     }
   }
 
@@ -46,7 +44,6 @@ void SearchRooms(cJSON *rooms_json) {
   for (int i = 0; i < 4; i++) {
     char *capitalized_room_type = Capitalize(room_types[i]);
     printf("\n%d. %s", i + 1, capitalized_room_type);
-    free(capitalized_room_type);
   }
 
   int choice = Choice("Enter choice", 1, 4) - 1;
@@ -69,8 +66,6 @@ void SearchRooms(cJSON *rooms_json) {
 
       // Add room information to the table
       ft_printf_ln(table, "%s|%d|%s", item->string, price, capitalized_type);
-
-      free(capitalized_type);
     }
   }
 

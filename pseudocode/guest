@@ -1,5 +1,5 @@
 START
-  DISPLAY choices (view available rooms, back)
+  DISPLAY choices (view available rooms, search for rooms by type, back)
 
   PROMPT user to input a choice
   READ choice
@@ -10,6 +10,21 @@ START
 
   IF choice is view available rooms THEN
     DISPLAY all the available rooms's necessary information (room id, price, type)
+
+    DISPLAY the guest login menu
+  ENDIF
+
+  IF choice is search for rooms by type THEN
+    DISPLAY room types (suite, deluxe, double, single)
+
+    PROMPT user to select the room type
+    READ room_type
+
+    IF there are no results THEN
+      Display "No room with this type is available, try again later."
+    ELSE
+      DISPLAY all the available room with the type room_type with the necessary information (room id, price, type)
+    ENDIF
 
     DISPLAY the guest login menu
   ENDIF

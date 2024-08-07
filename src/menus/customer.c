@@ -48,8 +48,6 @@ void MakeReservation(CustomerContext *ctx) {
       char *capitalized_type = Capitalize(cJSON_GetObjectItemCaseSensitive(ctx->item, "type")->valuestring);
 
       ft_printf_ln(ctx->table, "%d|%s|%d|%s", i, ctx->item->string, price, capitalized_type);
-
-      free(capitalized_type);
     }
   }
 
@@ -165,7 +163,6 @@ void CancelReservation(CustomerContext *ctx) {
       char *capitalized_type = Capitalize(cJSON_GetObjectItemCaseSensitive(room_data, "type")->valuestring);
 
       ft_printf_ln(ctx->table, "%d|%s|%d|%s", j + 1, room_id, price, capitalized_type);
-      free(capitalized_type);
 
       j++;
     }
@@ -236,7 +233,6 @@ void ViewCurrentBookings(CustomerContext *ctx) {
       char *capitalized_type = Capitalize(cJSON_GetObjectItemCaseSensitive(room_data, "type")->valuestring);
 
       ft_printf_ln(ctx->table, "%d|%s|%d|%s", i, room_id, price, capitalized_type);
-      free(capitalized_type);
       i++;
     }
   }
@@ -277,7 +273,6 @@ void ViewBookingHistory(CustomerContext *ctx) {
       char *capitalized_type = Capitalize(cJSON_GetObjectItemCaseSensitive(room_data, "type")->valuestring);
 
       ft_printf_ln(ctx->table, "%d|%s|%d|%s", i, room_id, price, capitalized_type);
-      free(capitalized_type);
 
       i++;
     }

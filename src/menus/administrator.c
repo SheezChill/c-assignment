@@ -1,7 +1,5 @@
-// TODO: put some comments
 #include "../../include/login.h"
 #include "../../include/utils.h"
-#include "../../lib/asprintf.h"
 #include "../../lib/cJSON.h"
 #include "../../lib/fort.h"
 #include "../../lib/nanoid.h"
@@ -136,15 +134,14 @@ void CreateUser(AdminContext *ctx, const UserType user_type) {
 }
 
 void ChangeUserField(AdminContext *ctx, Field field, UserType user_type) {
-  char *buffer;
-  asprintf(&buffer, "New %s", field.field_name);
+  char buffer[100];
+  snprintf(buffer, 100, "New %s", field.field_name);
 
   char *new_value = StringInput(buffer, 64);
 
   cJSON_SetValuestring(cJSON_GetObjectItemCaseSensitive(ctx->selected_user, field.field_name), new_value);
 
   free(new_value);
-  free(buffer);
 
   switch (user_type) {
   case STAFF:
@@ -254,7 +251,7 @@ void ManageRooms_Edit(AdminContext *ctx, char *room_ids[]) {
 
       printf("\n%d. %s", i + 1, capitalized_room_type);
 
-      free(capitalized_room_type);
+
     }
 
     RoomType selected_room_type = room_types[Choice("Enter choice: ", 1, 4) - 1];
@@ -304,7 +301,6 @@ void ManageRooms_Add(AdminContext *ctx) {
 
     printf("\n%d. %s", i + 1, capitalized_room_type);
 
-    free(capitalized_room_type);
   }
 
   RoomType selected_room_type = room_types[Choice("Enter choice: ", 1, 4) - 1];
@@ -347,7 +343,6 @@ void ManageRooms(AdminContext *ctx) {
                  cJSON_GetObjectItemCaseSensitive(ctx->item, "booked")->valueint ? "Yes" : "No",
                  cJSON_IsNull(booked_by) ? "No one" : booked_by->valuestring);
 
-    free(capitalized_type);
   }
 
   printf("\n%s\n", ft_to_string(table));

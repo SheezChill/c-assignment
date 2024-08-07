@@ -1,4 +1,3 @@
-#include "../lib/asprintf.h"
 #include "../lib/cJSON.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -242,7 +241,17 @@ cJSON *FindValue(const cJSON *json, const char *value) {
   return NULL;
 }
 
-char *Capitalize(char *str) {
-  asprintf(&str, "%c%s", toupper(str[0]), str + 1);
-  return str;
+char *Capitalize(const char *str) {
+    if (str == NULL) return NULL;
+
+    size_t len = strlen(str);
+    if (len == 0) return strdup("");
+
+    char *result = malloc(len + 1);
+    if (result == NULL) return NULL;
+
+    strcpy(result, str);
+    result[0] = toupper((unsigned char)result[0]);
+
+    return result;
 }

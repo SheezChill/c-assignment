@@ -1,7 +1,6 @@
 // TODO: put some comments
 #include "../../include/login.h"
 #include "../../include/utils.h"
-#include "../../lib/asprintf.h"
 #include "../../lib/cJSON.h"
 #include "../../lib/fort.h"
 #include <stdio.h>
@@ -123,8 +122,9 @@ void ToggleCheckInOut(StaffContext *staffContext) {
       customer_ids[i] = cJSON_GetObjectItemCaseSensitive(item, "id")->valuestring;
       i++;
 
-      char *buffer;
-      asprintf(&buffer,
+      char buffer[100];
+      snprintf(buffer,
+               100,
                "[%s] %s",
                cJSON_GetObjectItemCaseSensitive(item, "id")->valuestring,
                cJSON_GetObjectItemCaseSensitive(item, "name")->valuestring);
