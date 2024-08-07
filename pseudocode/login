@@ -1,0 +1,22 @@
+START
+  DISPLAY choices (admin, staff, customer, guest, exit)
+
+  PROMPT user to input which role they want to login as 
+  READ choice
+
+  IF choice is exit THEN
+    exit the program
+  ELSE IF choice is guest THEN
+    DISPLAY the guest menu
+  ELSE
+    PROMPT user to input username
+    READ username
+
+    PROMPT user to input password
+    READ password
+
+    IF username and password has a match THEN
+      DISPLAY the appropriate menu based on the role chosen
+    ENDIF
+  ENDIF
+END

@@ -7,12 +7,15 @@
 #include <stdio.h>
 #include <string.h>
 
+// Define an enumeration for user roles
 typedef enum { ADMIN, STAFF, CUSTOMER } Role;
 
+// Function to handle user login
 char *Login(Role role) {
   char *db_data;
   cJSON *db_json;
 
+  // Load appropriate JSON database based on user role
   switch (role) {
   case ADMIN:
     db_data = ReadJSON("database/administrators.json");
@@ -28,15 +31,18 @@ char *Login(Role role) {
     break;
   }
 
-  char *name = StringInput("Enter name ", 64);
-  char *password = StringInput("Enter password ", 64);
+  // Get user input for name and password
+  char *name = StringInput("Enter name", 64);
+  char *password = StringInput("Enter password", 64);
 
+  // Iterate through JSON array to find matching credentials
   cJSON *item;
   cJSON_ArrayForEach(item, db_json) {
     char *user_name = cJSON_GetObjectItemCaseSensitive(item, "name")->valuestring;
     char *user_password = cJSON_GetObjectItemCaseSensitive(item, "password")->valuestring;
     cJSON *id = cJSON_GetObjectItemCaseSensitive(item, "id");
 
+    // Check if credentials match
     if (strcmp(name, user_name) == 0 && strcmp(password, user_password) == 0) {
       if (id != NULL) {
         return id->valuestring;
@@ -46,15 +52,18 @@ char *Login(Role role) {
     }
   }
 
+  // Return NULL if no matching credentials found
   return NULL;
 }
 
+// Function to handle user login and initialize appropriate user interface
 void LoginUser(Role role) {
   char *id = Login(role);
 
   if (id == NULL) {
     printf("\nInvalid credentials!");
   } else {
+    // Initialize appropriate interface based on user role
     switch (role) {
     case ADMIN:
       InitAdministrator();
@@ -69,6 +78,7 @@ void LoginUser(Role role) {
   }
 }
 
+// Function to display login menu and handle user choices
 void LoginMenu() {
   printf("\n1. Administrator");
   printf("\n2. Staff");
@@ -76,6 +86,7 @@ void LoginMenu() {
   printf("\n4. Continue as guest");
   printf("\n5. Exit");
 
+  // Get user choice
   int choice = Choice("Enter role", 1, 5);
 
   Role roles[] = {ADMIN, STAFF, CUSTOMER};

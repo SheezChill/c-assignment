@@ -1,0 +1,197 @@
+FUNCTION CreateUser(role)
+  PROMPT user to input a username
+  READ username
+
+  PROMPT user to input a password
+  READ password
+
+  IF role is staff THEN
+    PROMPT user to input the staff's email
+    READ email
+
+    PROMPT user to input the staff's phone number
+    READ phone
+
+    PROMPT user to input the staff's join date
+    READ join_date
+
+    WRITE username, password, email, phone, join_date to staffs json file
+  ELSE IF role is customer THEN
+    PROMPT user to input the customer's email
+    READ email
+
+    WRITE customer's template data (username, password, email, bookings) to customers json file
+  ENDIF
+ENDFUNCTION
+
+FUNCTION ManageStaffs()
+  DISPLAY a table listing all hotel staff's information (index, id, name, password, email, phone, join date) and also a back option
+
+  PROMPT user to pick which staff to edit or go back
+  READ choice
+
+  IF choice is back THEN
+    DISPLAY the administrator login menu
+  ELSE
+    DISPLAY a table listing all the selected staff's information again (id, name, password, email, phone, join date) and also a back option
+
+    PROMPT user to pick which information to edit or go back
+    READ information_choice
+
+    IF information_choice is back THEN
+      ManageStaffs()
+    ELSE
+      PROMPT user for a new value for the information
+      READ new_value
+
+      WRITE new_value for information_choice field to the staffs json file
+
+      DISPLAY the administrator login menu
+    ENDIF
+  ENDIF
+ENDFUNCTION
+
+FUNCTION ManageCustomers()
+  DISPLAY a table listing all customer's information (index, id, name, password, email) and also a back option
+
+  PROMPT user to pick which customer to edit or go back
+  READ choice
+
+  IF choice is back THEN
+    DISPLAY the administrator login menu
+  ELSE
+    DISPLAY a table listing all the selected customer's information again (id, name, password, email) and also a back option
+
+    PROMPT user to pick which information to edit or go back
+    READ information_choice
+
+    IF information_choice is back THEN
+      ManageCustomers()
+    ELSE
+      PROMPT user for a new value for the information
+      READ new_value
+
+      WRITE new_value for information_choice field to the customers json file
+
+      DISPLAY the administrator login menu
+    ENDIF
+  ENDIF
+ENDFUNCTION
+
+FUNCTION ManageRooms_Add()
+  PROMPT user to input the new room's id
+  READ room_id
+
+  IF room_id is 0 THEN
+    ManageRooms()
+  ENDIF
+
+  DOWHILE(room_id exists in the room json file)
+    PROMPT user to input the new room's id
+    READ room_id
+
+    IF (room_id exists in the room json file) THEN
+      DISPLAY "This room already exists!"
+    ENDIF
+  ENDDO
+
+  DISPLAY all the room types available with its corresponding price (suite 250, deluxe 200, double 150, single 100)
+
+  PROMPT user to pick input which type the room is going to be
+  READ room_type
+
+  WRITE a new room containing all the details the administrator have inputted (room id, room type, price) and a template room data (booked false, booked_by null, history empty array) into the room json file
+ENDFUNCTION
+
+FUNCTION ManageRooms_Edit(selected_room)
+  IF selected_room is booked THEN
+    DISPLAY "You can't edit this room! It's being booked!"
+    ManageRooms()
+  ENDIF
+
+  DISPLAY choices (edit room id, edit type, back)
+  READ choice
+
+  IF choice is back THEN
+    ManageRooms()
+  ENDIF
+
+  IF choice is edit room id THEN
+    PROMPT user to input the new room's id
+    READ room_id
+
+    DOWHILE(room_id exists in the room json file)
+      PROMPT user to input the new room's id
+      READ room_id
+
+      IF (room_id exists in the room json file) THEN
+        DISPLAY "This room already exists!"
+      ENDIF
+    ENDDO
+
+    WRITE the new room_id to the hotel's room id field in the rooms json file
+  ENDIF
+
+  IF choice is edit type THEN
+    DISPLAY all the room types available with its corresponding price (suite 250, deluxe 200, double 150, single 100)
+
+    PROMPT user to pick input which type the room is going to be
+    READ room_type
+
+    WRITE the new room type with its associated pricing to the room's type and price field in the rooms json file
+  ENDIF
+ENDFUNCTION
+
+FUNCTION ManageRooms()
+  DISPLAY the information of all the rooms that are available in the hotel (index, room id, type, price, booked status, booked by)
+
+  DISPLAY choices (add room, edit room, delete room, back)
+
+  PROMPT user to input a choice
+  READ choice
+
+  IF choice is back THEN
+    DISPLAY the administrator login menu
+  ELSE IF choice is add room THEN
+    ManageRooms_Add()
+  ELSE IF choice is edit room THEN
+    PROMPT user to input which room to edit based on the index
+    READ selected_room
+
+    ManageRooms_Edit(selected_room)
+  ELSE IF choice is delete room THEN
+    PROMPT user to input which room to edit based on the index
+    READ selected_room
+
+    PROMPT user for confirmation to delete the room (y/n)
+    READ confirmation
+
+    IF confirmation is n THEN
+      DISPLAY "Room deletion cancelled."
+      ManageRooms()
+    ELSE
+      DELETE the room from the rooms json file
+    ENDIF
+  ENDIF
+ENDFUNCTION
+
+START
+  DISPLAY choices (register new staff, register new customer, manage staff, manage customer, manage rooms, logout)
+
+  PROMPT user to input a choice
+  READ choice
+
+  IF choice is logout THEN
+    DISPLAY the login menu
+  ELSE IF choice is register new staff THEN
+    CreateUser(staff)
+  ELSE IF choice is register new customer THEN
+    CreateUser(customer)
+  ELSE IF choice is manage staff THEN
+    ManageStaffs()
+  ELSE IF choice is manage customer THEN
+    ManageStaffs()
+  ELSE IF choice is manage rooms THEN
+    ManageRooms()
+  ENDIF
+END

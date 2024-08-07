@@ -1,0 +1,92 @@
+FUNCTION ToggleCheckinCheckout()
+  DOWHILE (true)
+    DISPLAY all the customers (id, name)
+
+    PROMPT user to select which customer to toggle the check in or checkout of (0 to go back)
+    READ selected_customer
+
+    IF selected_customer is 0 THEN
+      DISPLAY the staff login menu
+      break
+    ENDIF
+
+    DOWHILE (true)
+      DISPLAY all the selected_customer's room booking info (index, room id, booking start, booking end, checked in, checked out)
+
+      PROMPT user to pick which room's booking to manage (0 to go back)
+      READ selected_booking
+
+      IF selected_booking is 0 THEN
+        break
+      ENDIF
+
+      DOWHILE (true)
+        DISPLAY the selected_customer's room booking info again but without the index (index, room id, booking start, booking end, checked in, checked out)
+
+        DISPLAY choices (toggle check in, toggle check out, back)
+
+        PROMPT user to input a choice
+        READ choice
+
+        IF choice is back THEN
+          break
+        ENDIF
+
+        IF choice is toggle check in THEN
+          toggle the customer's check in status of the room
+        ENDIF
+
+        IF choice is toggle check out THEN
+          toggle the customer's check out status of the room
+        ENDIF
+
+        WRITE the updated customer status to customers json file and rooms json file
+      ENDDO
+    ENDDO
+  ENDDO
+ENDFUNCTION
+
+START
+  DISPLAY choices (Check-in and check-out guests, view room availability, view room booking history, logout)
+
+  PROMPT user to input a choice
+  READ choice
+
+  IF choice is logout THEN
+    DISPLAY the login menu
+  ENDIF
+
+  IF choice is check-in and check-out guests THEN
+    ToggleCheckinCheckout()
+  ENDIF
+
+  IF choice is view room availability THEN
+    DISPLAY all the available rooms (non-booked rooms)
+  ENDIF
+
+  IF choice is view room booking history THEN
+    DISPLAY choices (view all booking history, view a specific room's history, back)
+
+    PROMPT user to pick a choice
+    READ view_history_choice
+
+    IF view_history_choice is back THEN
+      DISPLAY the staff login menu
+    ENDIF
+
+    IF view_history_choice is view all booking history THEN
+      DISPLAY a table listing the information of all the booking history of every room in the hotel (booked by, booking start, booking end)
+    ENDIF
+
+    IF view_history_choice is view a specific room's history THEN
+      DISPLAY a table listing all the room (index, room id)
+
+      PROMPT user to input which room's history to view based on the index
+      READ selected_room
+
+      DISPLAY a table listing the information of all the booking history of selected_room room (booked by, booking start, booking end)
+
+      DISPLAY the staff login menu
+    ENDIF
+  ENDIF
+END

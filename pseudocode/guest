@@ -1,0 +1,16 @@
+START
+  DISPLAY choices (view available rooms, back)
+
+  PROMPT user to input a choice
+  READ choice
+
+  IF choice is back THEN
+    DISPLAY the login menu
+  ENDIF
+
+  IF choice is view available rooms THEN
+    DISPLAY all the available rooms's necessary information (room id, price, type)
+
+    DISPLAY the guest login menu
+  ENDIF
+END

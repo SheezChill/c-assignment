@@ -42,12 +42,17 @@ void WriteJSON(const char *file_path, const cJSON *json) {
 int Choice(char *message, int min, int max) {
   int choice = 0;
   int invalid_integer = 0;
+  int c;
 
   do {
     printf("\n%s (%d-%d): ", message, min, max);
-    invalid_integer = scanf("%d", &choice) != 1 && scanf("%*[^\n]") == 0;
+    invalid_integer = scanf("%d", &choice) != 1;
 
-    if (invalid_integer == 1) {
+    // Clear the input buffer
+    while ((c = getchar()) != '\n' && c != EOF)
+      ;
+
+    if (invalid_integer) {
       printf("Input an integer!\n");
       continue;
     }
@@ -55,7 +60,7 @@ int Choice(char *message, int min, int max) {
     if (choice < min || choice > max) {
       printf("Invalid range!\n");
     }
-  } while (choice < min || choice > max || invalid_integer == 1);
+  } while (choice < min || choice > max || invalid_integer);
 
   return choice;
 }
@@ -186,19 +191,22 @@ char *StringInput(const char *message, const int strlength) {
   while (1) {
     printf("%s (max %d characters): ", message, strlength);
 
-    char *formatString = NULL;
-    asprintf(&formatString, "%%%ds", strlength + 1);
+    if (fgets(string, strlength + 2, stdin) == NULL) {
+      free(string);
+      return NULL;
+    }
 
-    scanf(formatString, string);
+    if (string[0] == '\n') {
+      continue;
+    }
 
-    free(formatString);
-
-    while (getchar() != '\n')
-      ;
-
-    if (strlen(string) > strlength) {
-      printf("\nMax length exceeded!\n\n");
+    if (string[strlength] != '\0' && string[strlength] != '\n') {
+      printf("Error: Input exceeds maximum length of %d characters.\n", strlength);
+      int ch;
+      while ((ch = getchar()) != '\n' && ch != EOF)
+        ;
     } else {
+      string[strcspn(string, "\n")] = 0;
       break;
     }
   }

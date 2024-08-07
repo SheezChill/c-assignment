@@ -1,0 +1,94 @@
+FUNCTION MakeReservation()
+  IF there are no rooms available / all the rooms are booked THEN
+    DISPLAY "No rooms available, please come back soon."
+  ELSE
+    DISPLAY the information of all the non-booked rooms (index, room id, price, type)
+  ENDIF
+
+  DISPLAY choices (reserve a room, back)
+
+  PROMPT user to input a choice
+  READ choice
+
+  IF choice is back THEN
+    DISPLAY the customer's login menu
+  ELSE
+    PROMPT the user to input which room to make a reservation for based on the index
+    READ selected_room
+
+    PROMPT user to enter the date and time of the start of the booking (format: YYYY-MM-DDTHH:mm)
+    READ booking_start
+
+    PROMPT user to enter the date and time of the end of the booking (format: YYYY-MM-DDTHH:mm)
+    READ booking_end
+
+    make selected_room's booked field to true and the booked_by field to the customer's id
+    append the new booking info to the customer's bookings array
+
+    PROMPT the user if they would like to make another reservation or not (y/n)
+    READ another
+
+    IF another is y THEN
+      MakeReservation()
+    ELSE
+      DISPLAY the customer's login menu
+    ENDIF
+  ENDIF
+ENDFUNCTION
+
+FUNCTION CancelReservation()
+  IF there are no reservations available THEN
+    DISPLAY "You have no reservation!"
+  ELSE
+    DISPLAY all the user's current reservations with its info (index, room id, price, type)
+  ENDIF
+
+  PROMPT user to pick which room's reservation the user wants to cancel based on the index (0 to go back)
+  READ choice
+
+  IF choice is 0 THEN
+    DISPLAY the customer's login menu
+  ENDIF
+
+  make selected_room's booked field to true and the booked_by field to the customer's id
+  remove the reservation from the user's bookings field
+ENDFUNCTION
+
+FUNCTION ViewCurrentBookings()
+  IF there are no bookings available THEN
+    DISPLAY "You have no booking!"
+  ELSE
+    DISPLAY all the user's current bookings with its info (room id, price, type)
+  ENDIF
+
+  DISPLAY the customer's login menu
+ENDFUNCTION
+
+FUNCTION ViewBookingHistory()
+  IF the user has no booking history THEN
+    DISPLAY "You have no booking history!"
+  ELSE
+    DISPLAY all the user's booking history with the room information (room id, price, type)
+  ENDIF
+
+  DISPLAY the customer's login menu
+ENDFUNCTION
+
+START
+  DISPLAY choices (view rooms and make a reservation, cancel reservation, view current bookings, view booking history, logout)
+
+  PROMPT user to input a choice
+  READ choice
+
+  IF choice is logout THEN
+    DISPLAY the login menu
+  ELSE IF choice is view rooms and make a reservation THEN
+    MakeReservation()
+  ELSE IF choice is cancel reservation THEN
+    CancelReservation()
+  ELSE IF choice is view current bookings THEN
+    ViewCurrentBookings()
+  ELSE IF choice is view booking history THEN
+    MakeReservation()
+  ENDIF
+END

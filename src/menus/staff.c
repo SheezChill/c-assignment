@@ -1,3 +1,4 @@
+// TODO: put some comments
 #include "../../include/login.h"
 #include "../../include/utils.h"
 #include "../../lib/asprintf.h"
@@ -319,7 +320,7 @@ void StaffMenu(StaffContext *staffContext) {
   case 3: {
     while (1) {
       printf("\n1. View all booking history");
-      printf("\n2. View specific room's history");
+      printf("\n2. View a specific room's history");
       printf("\n3. Back");
 
       int choice = Choice("Enter choice", 1, 3);

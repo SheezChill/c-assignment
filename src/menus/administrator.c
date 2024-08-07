@@ -1,3 +1,4 @@
+// TODO: put some comments
 #include "../../include/login.h"
 #include "../../include/utils.h"
 #include "../../lib/asprintf.h"
@@ -122,7 +123,6 @@ void CreateUser(AdminContext *ctx, const UserType user_type) {
 
     cJSON_AddStringToObject(new_user, "email", email);
     cJSON_AddArrayToObject(new_user, "bookings");
-    cJSON_AddArrayToObject(new_user, "reservations");
 
     free(email);
 
@@ -371,6 +371,14 @@ void ManageRooms(AdminContext *ctx) {
   }
   case 3: {
     choice = Choice("Room to delete", 1, cJSON_GetArraySize(ctx->rooms_json)) - 1;
+
+    if (cJSON_GetObjectItemCaseSensitive(FindValue(ctx->rooms_json, room_ids[choice]), "booked")->valueint ==
+        1) {
+      printf("\nYou can't delete this room! It's being booked!\n");
+
+      ManageRooms(ctx);
+      return;
+    }
 
     int confirmation = YesNo("Are you sure you want to delete this room?");
 
