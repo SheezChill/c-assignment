@@ -113,13 +113,10 @@ void ViewSpecificRoomBookingHistory(StaffContext *staffContext) {
 void ToggleCheckInOut(StaffContext *staffContext) {
   cJSON *customers_json = staffContext->customers_json;
 
-  char *customer_ids[cJSON_GetArraySize(customers_json)];
-
   while (1) {
     int i = 0;
     cJSON *item;
     cJSON_ArrayForEach(item, customers_json) {
-      customer_ids[i] = cJSON_GetObjectItemCaseSensitive(item, "id")->valuestring;
       i++;
 
       char buffer[100];
